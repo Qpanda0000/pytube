@@ -16,10 +16,21 @@ def gettime():
     nowtime=time.localtime()
     return str(nowtime.tm_year) + '{:0>2d}'.format(nowtime.tm_mon) + '{:0>2d}'.format(nowtime.tm_mday) +','+ '{:0>2d}'.format(nowtime.tm_hour)+ ':' + '{:0>2d}'.format(nowtime.tm_min)+ ':' + '{:0>2d}'.format(nowtime.tm_sec) + '\t'
 
+#----getname----
+def getname(url):
+    for i in range(10):
+        try:
+            name = YouTube(url).title
+            return name
+        except:
+            continue
+    f.write(gettime() + url + '\t' + 'get name error\n')
+    return('get name error %s' %(url))
+
 #----download mp4----
 def downloadmp4(url):
     yt = YouTube(url)
-    name = yt.title
+    name = getname(url)
     characters = ':/\\\'\"*;~!$&>@?|.'
     for i in range(len(characters)):
         name = name.replace(characters[i],'')
@@ -67,7 +78,7 @@ def downloadmp4(url):
 #----download mp3----
 def downloadmp3(url):
     yt=YouTube(url)
-    name=yt.title
+    name = getname(url)
     characters = ':/\\\'\"*;~!$&>@?|'
     for i in range(len(characters)):
         name = name.replace(characters[i],'')
@@ -100,14 +111,14 @@ if 'list' in url:
     print('playlist')
     plurl = Playlist(url)
     for i in plurl.video_urls:
-        name = YouTube(i).title
+        name = getname(i)
         if type == 'a':
             print(name+'\t'+downloadmp3(i))
         elif type == 'b':
             print(name+'\t'+downloadmp4(i))
 else:
     print('not playlist')
-    name = YouTube(url).title
+    name = getname(url)
     if type == 'a':
         print(name+'\t'+downloadmp3(url))
     elif type == 'b':
