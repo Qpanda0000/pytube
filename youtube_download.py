@@ -9,7 +9,24 @@ path = ''
 
 nowtime=time.localtime()
 errorlog_fname=str(nowtime.tm_year) + '{:0>2d}'.format(nowtime.tm_mon) + '{:0>2d}'.format(nowtime.tm_mday) +', '+ '{:0>2d}'.format(nowtime.tm_hour)+ '_' + '{:0>2d}'.format(nowtime.tm_min)+ '_' + '{:0>2d}'.format(nowtime.tm_sec)
+if not os.path.exists('./log/'):
+    os.makedirs('./log/')
 f=open('./log/'+ errorlog_fname +'.txt','w')
+count = 0
+#----file count----
+def countfile():
+    global count
+    count+=1
+    return count
+
+#----check file exists
+def checkfileexists(name,type):
+    if not type == 1:
+        if os.path.exists('./'+path+'/mp4/'+name+'.mp4'):
+            return True
+    if os.path.exists('./'+path+'/'+name+'.mp3'):
+        return True
+    return False
 
 #----gettime----
 def gettime():
@@ -31,28 +48,31 @@ def getname(url):
 def downloadmp4(url):
     yt = YouTube(url)
     name = getname(url)
-    characters = ':/\\\'\"*;~!$&>@?|.'
+    characters = ':/\\\'\"*;~!$&<>@?|.'
     for i in range(len(characters)):
         name = name.replace(characters[i],'')
+    if checkfileexists(name,2):
+        f.write(gettime() + url + '\t' + 'download mp4 error -- file is exists\n')
+        return('file is exists')
     try:
         yt.streams.filter(mime_type="audio/mp4").last().download(filename='audio.mp3')
         yt.streams.filter(res='1080p').first().download(filename='video.mp4')
     except pytube.exceptions.VideoUnavailable:
-        f.write(gettime() + url + '\t' + 'download mp4 error -- video is unavailable')
+        f.write(gettime() + url + '\t' + 'download mp4 error -- video is unavailable\n')
         return('download mp4 error -- video is unavailable')
     except pytube.exceptions.RegexMatchError:
-        f.write(gettime() + url + '\t' + 'download mp4 error -- regex match error')
+        f.write(gettime() + url + '\t' + 'download mp4 error -- regex match error\n')
         return('download mp4 error -- regex match error')
     except pytube.exceptions.PytubeError:
-        f.write(gettime() + url + '\t' + 'download mp4 error -- pytube error')
+        f.write(gettime() + url + '\t' + 'download mp4 error -- pytube error\n')
         return('download mp4 error -- pytube error')
     except:
-        f.write(gettime() + url + '\t' + 'download mp4 error')
+        f.write(gettime() + url + '\t' + 'download mp4 error\n')
         return('download mp4 error')
     try:
         subprocess.call('ffmpeg -y -i ./video.mp4 -i ./audio.mp3 -c copy tem.mp4',shell=True)
     except:
-        f.write(gettime() + url + '\t' + 'ffmpeg error')
+        f.write(gettime() + url + '\t' + 'ffmpeg error\n')
         return('ffmpeg error')
     try:
         if not os.path.exists('./'+path+'/mp4/'):
@@ -60,19 +80,20 @@ def downloadmp4(url):
         os.rename('tem.mp4',name+'.mp4')
         os.replace('./'+name+'.mp4','./'+path+'/mp4/'+name +'.mp4')
     except OSError as e:
-        f.write(gettime() + url + '\t' + 'replace mp4 file error -- %s - %s' %(e.filename,e.strerror))
+        f.write(gettime() + url + '\t' + 'replace mp4 file error -- %s - %s\n' %(e.filename,e.strerror))
         os.remove(name+'.mp4')
         print('replace mp4 file error -- %s - %s' %(e.filename,e.strerror))
     try:
         os.remove('./audio.mp3')
     except OSError as e:
-        f.write(gettime() + url + '\t' + 'remove audio error -- %s - %s' %(e.filename,e.strerror))
+        f.write(gettime() + url + '\t' + 'remove audio error -- %s - %s\n' %(e.filename,e.strerror))
         return('remove audio error -- %s - %s' %(e.filename,e.strerror))
     try:
         os.remove('./video.mp4')
     except OSError as e:
-        f.write(gettime() + url + '\t' + 'remove video error -- %s - %s' %(e.filename,e.strerror))
+        f.write(gettime() + url + '\t' + 'remove video error -- %s - %s\n' %(e.filename,e.strerror))
         return('remove video error -- %s - %s' %(e.filename,e.strerror))
+    countfile()
     return('download mp4 done')
 
 #----download mp3----
@@ -82,20 +103,24 @@ def downloadmp3(url):
     characters = ':/\\\'\"*;~!$&>@?|'
     for i in range(len(characters)):
         name = name.replace(characters[i],'')
+    if checkfileexists(name,1):
+        f.write(gettime() + url + '\t' + 'download mp3 error -- file is exists\n')
+        return('file is exists')
     try:
         yt.streams.filter(mime_type="audio/mp4").last().download('./'+path,filename=name + '.mp3')
+        countfile()
         return('download mp3 done')
     except pytube.exceptions.VideoUnavailable:
-        f.write(gettime() + url + '\t' + 'download mp3 error -- video is unavailable')
+        f.write(gettime() + url + '\t' + 'download mp3 error -- video is unavailable\n')
         return('download mp3 error -- video is unavailable')
     except pytube.exceptions.RegexMatchError:
-        f.write(gettime() + url + '\t' + 'download mp3 error -- regex match error')
+        f.write(gettime() + url + '\t' + 'download mp3 error -- regex match error\n')
         return('download mp3 error -- regex match error')
     except pytube.exceptions.PytubeError:
-        f.write(gettime() + url + '\t' + 'download mp3 error -- pytube error')
+        f.write(gettime() + url + '\t' + 'download mp3 error -- pytube error\n')
         return('download mp3 error -- pytube error')
     except:
-        f.write(gettime() + url + '\t' + 'download mp3 error')
+        f.write(gettime() + url + '\t' + 'download mp3 error\n')
         return('download mp3 error')
 
 #----main----
@@ -123,5 +148,6 @@ else:
         print(name+'\t'+downloadmp3(url))
     elif type == 'b':
         print(name+'\t'+downloadmp4(url))
-f.write('--------------------------------------------------\n'+gettime()+'\t'+'done')
+f.write('\n--------------------------------------------------\n'+gettime()+'\t'+'done')
+print('file done count '+str(countfile()-1))
 f.close()
